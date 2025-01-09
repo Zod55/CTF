@@ -1,0 +1,71 @@
+in line 721 there is the function betting()
+that checks how much the user want to bet.
+
+
+int betting() //Asks user amount to bet
+{
+ printf("\n\nEnter Bet: $");
+ scanf("%d", &bet);
+ 
+ if (bet > cash) //If player tries to bet more money than player has
+ {
+        printf("\nYou cannot bet more money than you have.");
+        printf("\nEnter Bet: ");
+        scanf("%d", &bet);
+        return bet;
+ }
+ else return bet;
+} // End Function
+ 
+
+
+since the program only checks once if the user got over the buget that he have.
+I was able to manipulaite it to let me enter any amount i want in the second time (betting for 1M-2B int limit)
+
+I started to play (never played blackjack before so just did rendomaize things at start)
+Then i saw this function
+that seid as long as i wait the deale 
+void stay() //Function for when user selects 'Stay'
+{
+     dealer(); //If stay selected, dealer continues going
+     if(dealer_total>=17)
+     {
+      if(player_total>=dealer_total) //If player's total is more than dealer's total, win
+      {
+         printf("\nUnbelievable! You Win!\n");
+         won = won+1;
+         cash = cash+bet;
+         printf("\nYou have %d Wins and %d Losses. Awesome!\n", won, loss);
+         dealer_total=0;
+         askover();
+      }
+      if(player_total<dealer_total) //If player's total is less than dealer's total, loss
+      {
+         printf("\nDealer Has the Better Hand. You Lose.\n");
+         loss = loss+1;
+         cash = cash - bet;
+         printf("\nYou have %d Wins and %d Losses. Awesome!\n", won, loss);
+         dealer_total=0;
+         askover();
+      }
+      if(dealer_total>21) //If dealer's total is more than 21, win
+      {
+         printf("\nUnbelievable! You Win!\n");
+         won = won+1;
+         cash = cash+bet;
+         printf("\nYou have %d Wins and %d Losses. Awesome!\n", won, loss);
+         dealer_total=0;
+         askover();
+      }
+     }
+     else
+     {
+         stay();
+     }
+      
+}
+
+
+and all i nedd to do is to build a simple script that would run in a loop until the dealer gets over 21 
+
+the script is in exploit.py
