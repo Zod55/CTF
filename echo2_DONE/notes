@@ -1,0 +1,51 @@
+localy:
+
+pwndbg> x &o
+0x602098 <o>:	0x16177010 -> same as the leak 4141414110701716 (AAAA 0x16177010)
+pwndbg> got
+Filtering out read-only entries (display them with -r or --show-readonly)
+
+State of the GOT of /home/yogevkali/Documents/pwn/echo2/echo2.1_remotelibc:
+GOT protection: Partial RELRO | Found 9 GOT entries passing the filter
+[0x602000] free@GLIBC_2.2.5 -> 0x400626 (free@plt+6) ◂— push 0 /* 'h' */
+[0x602008] puts@GLIBC_2.2.5 -> 0x400636 (puts@plt+6) ◂— push 1
+[0x602010] printf@GLIBC_2.2.5 -> 0x7f1812055810 (printf) ◂— sub rsp, 0xd8           ->same as leak 4141414110580512187f (AAAA 0x7f1812055810)
+[0x602018] __libc_start_main@GLIBC_2.2.5 -> 0x7f1812020750 (__libc_start_main) ◂— push r14
+[0x602020] fgets@GLIBC_2.2.5 -> 0x400666 (fgets@plt+6) ◂— push 4
+[0x602028] getchar@GLIBC_2.2.5 -> 0x400676 (getchar@plt+6) ◂— push 5
+[0x602030] malloc@GLIBC_2.2.5 -> 0x7f1812084180 (malloc) ◂— push rbp
+[0x602038] setvbuf@GLIBC_2.2.5 -> 0x7f181206fe80 (setvbuf) ◂— push rbp
+[0x602040] __isoc99_scanf@GLIBC_2.7 -> 0x7f181206b4e0 (__isoc99_scanf) ◂— push rbx
+pwndbg> vmmap
+LEGEND: STACK | HEAP | CODE | DATA | WX | RODATA
+             Start                End Perm     Size Offset File
+          0x3fe000           0x3ff000 rw-p     1000      0 /home/yogevkali/Documents/pwn/echo2/echo2.1_remotelibc
+          0x400000           0x401000 r-xp     1000   2000 /home/yogevkali/Documents/pwn/echo2/echo2.1_remotelibc
+          0x601000           0x602000 r--p     1000   3000 /home/yogevkali/Documents/pwn/echo2/echo2.1_remotelibc
+          0x602000           0x603000 rw-p     1000   4000 /home/yogevkali/Documents/pwn/echo2/echo2.1_remotelibc
+        0x16177000         0x16198000 rw-p    21000      0 [heap]
+    0x7f1812000000     0x7f18121c0000 r-xp   1c0000      0 /home/yogevkali/Documents/pwn/echo2/libs/libc.so.6
+    0x7f18121c0000     0x7f18123c0000 ---p   200000 1c0000 /home/yogevkali/Documents/pwn/echo2/libs/libc.so.6
+    0x7f18123c0000     0x7f18123c4000 r--p     4000 1c0000 /home/yogevkali/Documents/pwn/echo2/libs/libc.so.6
+    0x7f18123c4000     0x7f18123c6000 rw-p     2000 1c4000 /home/yogevkali/Documents/pwn/echo2/libs/libc.so.6
+    0x7f18123c6000     0x7f18123ca000 rw-p     4000      0 [anon_7f18123c6]
+    0x7f1812400000     0x7f1812426000 r-xp    26000      0 /home/yogevkali/Documents/pwn/echo2/libs/ld-linux-x86-64.so.2
+    0x7f1812625000     0x7f1812626000 r--p     1000  25000 /home/yogevkali/Documents/pwn/echo2/libs/ld-linux-x86-64.so.2
+    0x7f1812626000     0x7f1812627000 rw-p     1000  26000 /home/yogevkali/Documents/pwn/echo2/libs/ld-linux-x86-64.so.2
+    0x7f1812627000     0x7f1812628000 rw-p     1000      0 [anon_7f1812627]
+    0x7f181279d000     0x7f18127a0000 rw-p     3000      0 [anon_7f181279d]
+    0x7f18127a0000     0x7f18127a4000 r--p     4000      0 [vvar]
+    0x7f18127a4000     0x7f18127a6000 r-xp     2000      0 [vdso]
+    0x7ffc1a436000     0x7ffc1a457000 rwxp    21000      0 [stack]
+pwndbg> 
+
+remote:
+
+
+41414141 10b07e01 982060 -> leak of AAAA 0x017eb010    o address (0x062098)
+41414141 10a8c1d8b37f 102060 -> leak of AAAA 0x7fb3d8c1a810            GOT of printf (0x602010) 
+                                              ^^^^ libc for printf
+
+
+
+now we need to get an offset and use %n to write to heap+0x18 the address of system

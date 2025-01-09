@@ -1,0 +1,10 @@
+the program itslef have 2 problem with the operators 
+
+the first and the seconf if 
+beacause the first one have fd=open(...) > 0 the we first do  open(...) >  0 and then fd=1,0 
+if the fd is 1 we will get an error on the second if so fd = 0 
+from  fd (the challenge) i still remember the fd=0 mean input from the user
+so i put 12345667890 amnd i did an xor 1 so i would put the input password and get the same answer
+
+
+which is 0325476981 and we get the flag: Mommy, the operator priority always confuses me :( 

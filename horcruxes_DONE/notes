@@ -1,0 +1,39 @@
+So first we could see in the main function (with binary ninja) that we first set the id of the program to root. Now let's do the code structure:
+
+1. The alarm function
+2. The hint function (used for printing only)
+3. init_ABCDEFG function - let's explore it:
+
+We read 4 bytes from /dev/urandom which gives us an unsigned random int. 
+Use the random number as a seed for more random numbers
+
+
+4. Initialize a seccomp(0). This means that if any syscall is made that is not on the filter, the process will be killed
+5. Make the rules of the syscall: So we have 5 syscalls that we can call open, read, write, exit, execve
+
+Now when we run in gdb and see the asm of the function ropme (which clearly gives the impression of ROP gadgets), and we have a gets function that we could exploit with an overflow to do it.
+We could chain values together to open a system or execve to open a shell and get the flag.
+
+We could put /bin/sh on the stack and then make a chain. 
+The system call takes the value from the stack. 
+We need the return address and the string pointer (use libc).
+
+I gave the challenge too much credit and thought that we needed to do a leak and open a shell, but actually we could get all numbers from the functions A → G, 
+then go back to ropme, and now I know the sum so I could easily pass the if statement and get our flag.
+
+The way we do it is that we first overflow the buffer until we get to the return address, then we change the return to the function A. 
+Now how we get to B, C, ... we're going to do that by using the instruction of ret. 
+What ret does is pop the value off the stack and then pass it to EIP and then jump to EIP. 
+So we could chain them together: first the address of A, then when A is done it's going to do return to the address of B, and so on.
+And we want to go back to ropme, so we put after the address of G the address of ropme in main (I also made the stack to look the same as we call the original program).
+
+Now after we have all the numbers, we could add them and pass it to gets again.
+
+PoC usage:
+So run the help.py and the exp.py at the same time. 
+When you get an interactive shell in the exp.py, press Enter to get the text, then pass it to help.py and press Ctrl+D, and you will get the numbers. 
+Send a random number to the select menu and pass the result from help.py to the last question, and you will get the flag
+
+
+PoC upadte:
+You can run the exp.py and you will get the flag with no need to copy and paste any thing 

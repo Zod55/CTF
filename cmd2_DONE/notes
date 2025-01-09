@@ -1,0 +1,12 @@
+since we dont have any way to use the / we need to use a binary we now that output / 
+
+this binary is pwd in the root directory but we cant just write $(pwd)bin$(pwd) (pwn will be executed)
+so we need to put them in '' so it wont be trigerrd 
+so the payload is  '$(pwd)bin$(pwd)cat $(pwd)home$(pwd)cmd2$(pwd)*'
+we could even open a shell as root with it  '$(pwd)bin$(pwd)sh'
+remmber to run it from the root directory and not to use "" as it will run the pwd and will get cought by the filter
+
+
+
+and we get the flag:FuN_w1th_5h3ll_v4riabl3s_haha
+

